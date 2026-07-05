@@ -1,5 +1,5 @@
 {
-  "app": { "title": "Course Forum" },
+  "app": { "title": "Course Forum", "eyebrow": "Study ledger" },
   "nav": { "feed": "Feed", "saved": "Saved", "main": "Main navigation" },
   "header": {
     "signedInAs": "Viewing as",
@@ -8,6 +8,11 @@
   },
   "feed": {
     "coursesLabel": "Courses",
+    "ledgerLabel": "Course ledger",
+    "trackLabel": "Enrolled track",
+    "current": "Open now",
+    "streamLabel": "Latest notes",
+    "orderLabel": "Newest first",
     "empty": "No posts in this course yet.",
     "loadMore": "Load more",
     "noCourses": "You are not enrolled in any course."
@@ -21,6 +26,8 @@
   },
   "saved": {
     "title": "Saved posts",
+    "ledgerLabel": "Saved stack",
+    "railLabel": "Reading queue",
     "empty": "Nothing saved yet — tap the bookmark on any post to keep it here.",
     "goToFeed": "Browse the feed",
     "savedAt": "Saved {relative}"

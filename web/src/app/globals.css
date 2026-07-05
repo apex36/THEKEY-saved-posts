@@ -1,1 +1,36 @@
 @import "tailwindcss";
+
+:root {
+  --ledger-paper: #eaf0e6;
+  --ledger-sheet: #fffdf6;
+  --ledger-ink: #17201c;
+  --ledger-muted: #4f615a;
+  --ledger-rule: #c7d2c8;
+  --ledger-course: #225e68;
+  --ledger-save: #a85a28;
+  --ledger-danger: #9e3d2e;
+  --ledger-display: "Aptos Display", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --ledger-body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ledger-utility: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+html {
+  background: var(--ledger-paper);
+}
+
+body {
+  background: var(--ledger-paper);
+  font-family: var(--ledger-body);
+}
+
+::selection {
+  background: rgba(168, 90, 40, 0.22);
+}
+
+.font-ledger-display {
+  font-family: var(--ledger-display);
+}
+
+.font-ledger-utility {
+  font-family: var(--ledger-utility);
+}

@@ -80,6 +80,19 @@ test('req 3 + 5 + 7: empty state → optimistic save → first in Saved → un-s
   await expect(page.getByText('Nothing saved yet')).toBeVisible();
 });
 
+test('OWN rule: switching users while already on Saved refetches the viewer list', async ({ page }) => {
+  await page.goto('/en/saved');
+  await expect(page.getByText('Nothing saved yet')).toBeVisible();
+
+  await switchTo(page, CHEN.id);
+  await expect(page.getByText('Narrowing unions without pain')).toBeVisible();
+  await expect(page.getByText('Nothing saved yet')).toHaveCount(0);
+
+  await switchTo(page, ALICE.id);
+  await expect(page.getByText('Nothing saved yet')).toBeVisible();
+  await expect(page.getByText('Narrowing unions without pain')).toHaveCount(0);
+});
+
 test('OWN rule + role scoping: saved lists never leak across identities', async ({ page }) => {
   // Alice saves a post…
   await page.goto('/en');
@@ -96,6 +109,7 @@ test('OWN rule + role scoping: saved lists never leak across identities', async 
 
   // Bilal sees only his course — the TypeScript tab is gone entirely.
   await switchTo(page, BILAL.id);
+  await page.getByRole('link', { name: 'Feed' }).click();
   await expect(page.getByRole('tab', { name: 'Databases 201' })).toBeVisible();
   await expect(page.getByRole('tab', { name: 'TypeScript 101' })).toHaveCount(0);
 });
@@ -132,6 +146,7 @@ test('req 8: Arabic locale renders RTL with catalog strings and correct plural c
   // Chen can open Databases 201, where p02 carries exactly two saves — the dual form.
   await switchTo(page, CHEN.id);
   await page.getByRole('tab', { name: 'Databases 201' }).click();
+  await page.getByRole('button', { name: 'عرض المزيد' }).click();
   await expect(page.getByText('عمليتا حفظ')).toBeVisible(); // two (dual)
 
   // Locale switcher returns to English and the document flips to LTR.

@@ -9,28 +9,29 @@ import { api, unwrap } from './api-client';
 
 export const courseKeys = {
   all: ['courses'] as const,
+  list: (userId: string) => [...courseKeys.all, userId] as const,
 };
 
 export const feedKeys = {
   all: ['feed'] as const,
-  list: (courseId: string) => [...feedKeys.all, courseId] as const,
+  list: (userId: string, courseId: string) => [...feedKeys.all, userId, courseId] as const,
 };
 
 export const savedKeys = {
   all: ['saved'] as const,
-  list: () => [...savedKeys.all, 'list'] as const,
+  list: (userId: string) => [...savedKeys.all, userId, 'list'] as const,
 };
 
 // Small page size keeps "Load more" demonstrable with the seeded data volume.
 const PAGE_SIZE = 5;
 
-export const coursesOptions = () => queryOptions({
-  queryKey: courseKeys.all,
+export const coursesOptions = (userId: string) => queryOptions({
+  queryKey: courseKeys.list(userId),
   queryFn: async () => unwrap(await api.api.courses.get()),
 });
 
-export const feedInfiniteOptions = (courseId: string) => infiniteQueryOptions({
-  queryKey: feedKeys.list(courseId),
+export const feedInfiniteOptions = (userId: string, courseId: string) => infiniteQueryOptions({
+  queryKey: feedKeys.list(userId, courseId),
   queryFn: async ({ pageParam }) => unwrap(await api.api.courses({ courseId }).posts.get({
     query: pageParam ? { cursor: pageParam, limit: PAGE_SIZE } : { limit: PAGE_SIZE },
   })),
@@ -39,8 +40,8 @@ export const feedInfiniteOptions = (courseId: string) => infiniteQueryOptions({
   enabled: courseId !== '',
 });
 
-export const savedInfiniteOptions = () => infiniteQueryOptions({
-  queryKey: savedKeys.list(),
+export const savedInfiniteOptions = (userId: string) => infiniteQueryOptions({
+  queryKey: savedKeys.list(userId),
   queryFn: async ({ pageParam }) => unwrap(await api.api.me.saved.get({
     query: pageParam ? { cursor: pageParam, limit: PAGE_SIZE } : { limit: PAGE_SIZE },
   })),

@@ -26,12 +26,17 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-      <body className="min-h-screen bg-slate-50 text-slate-900">
+      <body className="min-h-screen bg-[#EAF0E6] text-[#17201C] antialiased">
         <NextIntlClientProvider messages={messages}>
           <Providers>
             <CurrentUserProvider>
               <Header />
-              <main className="mx-auto max-w-2xl px-4 py-6">{children}</main>
+              <main
+                data-visual-system="course-ledger"
+                className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:py-8"
+              >
+                {children}
+              </main>
             </CurrentUserProvider>
           </Providers>
         </NextIntlClientProvider>

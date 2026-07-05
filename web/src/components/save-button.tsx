@@ -16,8 +16,8 @@ export function SaveButton({ saved, count, pending, onToggle }: {
       disabled={pending}
       aria-pressed={saved}
       aria-label={saved ? t('unsave') : t('save')}
-      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition
-        ${saved ? 'border-amber-400 bg-amber-50 text-amber-700' : 'border-slate-300 text-slate-600 hover:bg-slate-100'}
+      className={`inline-flex min-h-9 items-center gap-2 rounded-[4px] border px-2.5 py-1 text-sm font-medium transition
+        ${saved ? 'border-[#A85A28] bg-[#F1DFCC] text-[#7A441E]' : 'border-[#C7D2C8] bg-[#FFFDF6] text-[#4F615A] hover:border-[#A85A28] hover:text-[#7A441E]'}
         ${pending ? 'opacity-50' : ''}`}
     >
       <svg

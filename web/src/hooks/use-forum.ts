@@ -14,6 +14,7 @@ import {
   type InfiniteData,
 } from '@tanstack/react-query';
 import { api, unwrap } from '@/lib/api-client';
+import { useCurrentUser } from '@/lib/current-user';
 import {
   coursesOptions,
   feedInfiniteOptions,
@@ -37,9 +38,20 @@ export interface PostItem {
 type Page = { items: PostItem[]; nextCursor: string | null };
 type Lists = InfiniteData<Page>;
 
-export const useCourses = () => useQuery(coursesOptions());
-export const useFeed = (courseId: string) => useInfiniteQuery(feedInfiniteOptions(courseId));
-export const useSaved = () => useInfiniteQuery(savedInfiniteOptions());
+export const useCourses = () => {
+  const { user } = useCurrentUser();
+  return useQuery(coursesOptions(user.id));
+};
+
+export const useFeed = (courseId: string) => {
+  const { user } = useCurrentUser();
+  return useInfiniteQuery(feedInfiniteOptions(user.id, courseId));
+};
+
+export const useSaved = () => {
+  const { user } = useCurrentUser();
+  return useInfiniteQuery(savedInfiniteOptions(user.id));
+};
 
 const patchItems = (data: Lists | undefined, postId: string, nextSaved: boolean): Lists | undefined =>
   data && {
