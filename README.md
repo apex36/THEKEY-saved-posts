@@ -7,6 +7,7 @@ Monorepo: `server/` (Bun + Elysia + Drizzle + PostgreSQL) · `web/` (Next.js 16 
 ## Prerequisites
 
 - **Bun** ≥ 1.2 ([bun.sh](https://bun.sh))
+- **Node.js** ≥ 20 — Next.js and the `tsx`-based DB scripts run on Node
 - **Docker** — for Postgres only; **tests run without it**
 
 ## Setup
