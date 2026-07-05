@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import {
+  check,
   index,
   pgTable,
   primaryKey,
@@ -13,7 +14,9 @@ export const users = pgTable('users', {
   id: uuid('id').primaryKey(),
   name: text('name').notNull(),
   role: text('role', { enum: ['student', 'moderator'] }).notNull(),
-});
+}, (t) => [
+  check('users_role_check', sql`${t.role} in ('student', 'moderator')`),
+]);
 
 export const courses = pgTable('courses', {
   id: uuid('id').primaryKey(),
