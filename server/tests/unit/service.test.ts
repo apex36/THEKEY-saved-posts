@@ -133,6 +133,31 @@ describe('getFeed / getSavedList', () => {
   });
 });
 
+describe('feed tie-break (equal created_at)', () => {
+  it('orders by id desc within the same timestamp and the cursor never skips/duplicates', async () => {
+    const twin = (n: number, id: string) => ({
+      id,
+      courseId: COURSE_TS,
+      authorId: ALICE.id,
+      title: `twin ${n}`,
+      body: 'same instant',
+      createdAt: '2026-06-20T12:00:00.000Z', // identical timestamps
+    });
+    const twins = [
+      twin(1, 'aaaa0001-0000-4000-8000-000000000001'),
+      twin(2, 'aaaa0002-0000-4000-8000-000000000002'),
+      twin(3, 'aaaa0003-0000-4000-8000-000000000003'),
+    ];
+    const tieRepos = new MemoryRepos({ posts: twins, saves: [] });
+    const tieSvc = new ForumService(tieRepos);
+
+    const page1 = await tieSvc.getFeed(ALICE, COURSE_TS, undefined, 2);
+    expect(page1.items.map((i) => i.id)).toEqual([twins[2]!.id, twins[1]!.id]); // id desc
+    const page2 = await tieSvc.getFeed(ALICE, COURSE_TS, page1.nextCursor!, 10);
+    expect(page2.items.map((i) => i.id)).toEqual([twins[0]!.id]); // no skip, no duplicate
+  });
+});
+
 describe('removePost authorization', () => {
   it('student cannot remove: 403 NOT_MODERATOR', async () => {
     await expect(svc.removePost(ALICE, tsPost.id))

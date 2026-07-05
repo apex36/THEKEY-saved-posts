@@ -80,11 +80,17 @@ describe('hydrated flags in one query', () => {
     expect(p2.items.every((i) => !seen.has(i.id))).toBe(true);
   });
 
-  it('saved list: most-recently-saved first, excludes removed posts', async () => {
+  it('saved list: most-recently-saved first, hydrated flags correct, excludes removed posts', async () => {
     const list = await repos.saved.listSavedPage(ALICE.id, null, 10);
     expect(list.items.length).toBeGreaterThanOrEqual(2);
     const times = list.items.map((i) => Date.parse(i.savedAt));
     expect([...times].sort((a, b) => b - a)).toEqual(times);
+
+    // hydrated flags inside the saved list itself (doc req 4 covers BOTH lists):
+    // tsPosts[1] has Alice active + Chen soft-deleted ⇒ count 1, and it's Alice's own save.
+    const hydrated = list.items.find((i) => i.id === tsPosts[1]!.id)!;
+    expect(hydrated.savesCount).toBe(1);
+    expect(hydrated.hasSaved).toBe(true);
 
     await repos.posts.softDelete(tsPosts[1]!.id);
     const after = await repos.saved.listSavedPage(ALICE.id, null, 10);

@@ -24,18 +24,23 @@ const req = (path: string, userId?: string, init?: RequestInit) =>
   }));
 
 describe('401 — unauthenticated request to any endpoint (doc rule 1)', () => {
-  it('missing x-user-id header', async () => {
+  it('missing x-user-id header — every route', async () => {
     for (const path of ['/me', '/users', '/courses', `/courses/${COURSE_TS}/posts`, '/me/saved']) {
       expect((await req(path)).status).toBe(401);
     }
     expect((await req(`/posts/${tsPost.id}/save`, undefined, { method: 'POST' })).status).toBe(401);
     expect((await req(`/posts/${tsPost.id}/save`, undefined, { method: 'DELETE' })).status).toBe(401);
+    expect((await req(`/posts/${tsPost.id}`, undefined, { method: 'DELETE' })).status).toBe(401);
   });
 
   it('unknown user id', async () => {
     const res = await req('/me', '00000000-0000-4000-8000-00000000dead');
     expect(res.status).toBe(401);
     expect(await res.json()).toEqual({ code: 'UNAUTHENTICATED' });
+  });
+
+  it('malformed user id through the HTTP layer', async () => {
+    expect((await req('/me', 'not-a-uuid')).status).toBe(401);
   });
 });
 
@@ -113,19 +118,42 @@ describe('happy path (doc reqs 3, 4, 5)', () => {
     expect((await req(`/posts/${tsPost.id}/save`, ALICE.id, { method: 'POST' })).status).toBe(404);
   });
 
-  it('pagination: limit respected, cursor walks, invalid cursor 400, out-of-range limit 400', async () => {
+  it('feed pagination: newest-first, limit respected, cursor walks without overlap, invalid inputs 400', async () => {
     const p1 = await (await req(`/courses/${COURSE_TS}/posts?limit=2`, ALICE.id)).json() as {
-      items: unknown[]; nextCursor: string | null;
+      items: { id: string; createdAt: string }[]; nextCursor: string | null;
     };
     expect(p1.items.length).toBe(2);
+    expect(Date.parse(p1.items[0]!.createdAt)).toBeGreaterThanOrEqual(Date.parse(p1.items[1]!.createdAt));
     expect(p1.nextCursor).toBeTruthy();
     const p2 = await (await req(`/courses/${COURSE_TS}/posts?limit=50&cursor=${encodeURIComponent(p1.nextCursor!)}`, ALICE.id)).json() as {
       items: { id: string }[];
     };
     expect(p2.items.length).toBeGreaterThan(0);
+    const seen = new Set(p1.items.map((i) => i.id));
+    expect(p2.items.every((i) => !seen.has(i.id))).toBe(true);
 
     expect((await req(`/courses/${COURSE_TS}/posts?cursor=%21%21bad`, ALICE.id)).status).toBe(400);
     expect((await req(`/courses/${COURSE_TS}/posts?limit=999`, ALICE.id)).status).toBe(400);
+  });
+
+  it('saved list pagination: cursor walks most-recently-saved first without overlap', async () => {
+    const tsPosts = POSTS.filter((p) => p.courseId === COURSE_TS);
+    for (const post of tsPosts.slice(0, 3)) {
+      await req(`/posts/${post.id}/save`, ALICE.id, { method: 'POST' });
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+    const p1 = await (await req('/me/saved?limit=2', ALICE.id)).json() as {
+      items: { id: string; savedAt: string }[]; nextCursor: string | null;
+    };
+    expect(p1.items.length).toBe(2);
+    expect(Date.parse(p1.items[0]!.savedAt)).toBeGreaterThanOrEqual(Date.parse(p1.items[1]!.savedAt));
+    expect(p1.nextCursor).toBeTruthy();
+    const p2 = await (await req(`/me/saved?limit=50&cursor=${encodeURIComponent(p1.nextCursor!)}`, ALICE.id)).json() as {
+      items: { id: string }[];
+    };
+    expect(p2.items.length).toBeGreaterThan(0);
+    const seen = new Set(p1.items.map((i) => i.id));
+    expect(p2.items.every((i) => !seen.has(i.id))).toBe(true);
   });
 
   it('GET /me returns the acting identity with its server-side role', async () => {
