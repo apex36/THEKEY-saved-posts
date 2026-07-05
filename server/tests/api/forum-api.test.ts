@@ -23,6 +23,16 @@ const req = (path: string, userId?: string, init?: RequestInit) =>
     headers: { ...(userId ? { 'x-user-id': userId } : {}), ...(init?.headers ?? {}) },
   }));
 
+describe('local dev CORS', () => {
+  it('allows localhost and 127.0.0.1 preview origins', async () => {
+    for (const origin of ['http://localhost:3000', 'http://127.0.0.1:3000']) {
+      const res = await req('/me', ALICE.id, { headers: { origin } });
+      expect(res.status).toBe(200);
+      expect(res.headers.get('access-control-allow-origin')).toBe(origin);
+    }
+  });
+});
+
 describe('401 — unauthenticated request to any endpoint (doc rule 1)', () => {
   it('missing x-user-id header — every route', async () => {
     for (const path of ['/me', '/users', '/courses', `/courses/${COURSE_TS}/posts`, '/me/saved']) {

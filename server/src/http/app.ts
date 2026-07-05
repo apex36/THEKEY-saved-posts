@@ -10,7 +10,7 @@ import type { ForumService } from '../services/forum-service';
 
 export function createApp(service: ForumService) {
   return new Elysia({ prefix: '/api' })
-    .use(cors({ origin: /^http:\/\/localhost:\d+$/ }))
+    .use(cors({ origin: /^http:\/\/(localhost|127\.0\.0\.1):\d+$/ }))
     .onError(({ error, status, code }) => {
       if (error instanceof ApiError) return status(error.status, { code: error.code });
       if (code === 'VALIDATION') return status(400, { code: 'VALIDATION' });

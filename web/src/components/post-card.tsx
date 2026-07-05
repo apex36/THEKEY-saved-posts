@@ -1,6 +1,6 @@
 'use client';
 
-import { useFormatter, useTranslations } from 'next-intl';
+import { useFormatter, useNow, useTranslations } from 'next-intl';
 import { SaveButton } from './save-button';
 
 export interface PostCardData {
@@ -24,6 +24,7 @@ export function PostCard({ post, pending, showRemove, onToggleSave, onRemove }: 
   const t = useTranslations('post');
   const tSaved = useTranslations('saved');
   const format = useFormatter();
+  const now = useNow();
 
   return (
     <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -57,7 +58,7 @@ export function PostCard({ post, pending, showRemove, onToggleSave, onRemove }: 
         />
         {post.savedAt && (
           <span className="text-xs text-slate-400">
-            {tSaved('savedAt', { relative: format.relativeTime(new Date(post.savedAt)) })}
+            {tSaved('savedAt', { relative: format.relativeTime(new Date(post.savedAt), now) })}
           </span>
         )}
       </div>

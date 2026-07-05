@@ -50,6 +50,12 @@ test('req 2 + 5: Load more walks the cursor without duplicating posts', async ({
 });
 
 test('req 3 + 5 + 7: empty state → optimistic save → first in Saved → un-save → empty again', async ({ page }) => {
+  const intlFallbacks: string[] = [];
+  page.on('console', (message) => {
+    const text = message.text();
+    if (text.includes('ENVIRONMENT_FALLBACK')) intlFallbacks.push(text);
+  });
+
   // Alice starts with no ACTIVE saves (her seeded save is soft-deleted) — empty state.
   await page.goto('/en/saved');
   await expect(page.getByText('Nothing saved yet')).toBeVisible();
@@ -67,6 +73,7 @@ test('req 3 + 5 + 7: empty state → optimistic save → first in Saved → un-s
   await page.getByRole('link', { name: 'Saved' }).click();
   await expect(page.locator('article h3').first()).toHaveText('The case for readonly everywhere');
   await expect(page.getByText(/^Saved /).first()).toBeVisible();
+  expect(intlFallbacks).toEqual([]);
 
   // Un-save from the Saved view: card leaves the list, empty state returns.
   await page.getByRole('button', { name: 'Remove from saved' }).click();
