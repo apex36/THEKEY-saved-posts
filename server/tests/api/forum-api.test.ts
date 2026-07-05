@@ -84,6 +84,18 @@ describe('404 — post that does not exist (doc rule 3)', () => {
   it('unknown course feed', async () => {
     expect((await req('/courses/88888888-8888-4888-8888-888888888888/posts', ALICE.id)).status).toBe(404);
   });
+
+  it('404 beats 403: a student removing a NONEXISTENT post gets 404, not NOT_MODERATOR', async () => {
+    // Existence is checked before the role gate — the response must not leak
+    // "you're not a moderator" for a resource that doesn't exist.
+    const res = await req('/posts/99999999-9999-4999-8999-999999999999', ALICE.id, { method: 'DELETE' });
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ code: 'POST_NOT_FOUND' });
+  });
+
+  it('404 beats 403: a malformed id on moderator remove is 404, not 403', async () => {
+    expect((await req('/posts/not-a-uuid', ALICE.id, { method: 'DELETE' })).status).toBe(404);
+  });
 });
 
 describe('OWN — saved list isolation (doc rule 4)', () => {

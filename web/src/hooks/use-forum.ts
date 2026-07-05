@@ -66,33 +66,79 @@ const patchItems = (data: Lists | undefined, postId: string, nextSaved: boolean)
     })),
   };
 
+// The post being saved is always visible in a feed page (saves originate from
+// the feed), so we can source its data from the feed snapshot for a symmetric
+// optimistic insert into the saved list.
+const findInSnapshots = (
+  snapshots: ReadonlyArray<readonly [unknown, Lists | undefined]>,
+  postId: string,
+): PostItem | undefined => {
+  for (const [, data] of snapshots) {
+    for (const page of data?.pages ?? []) {
+      const hit = page.items.find((item) => item.id === postId);
+      if (hit) return hit;
+    }
+  }
+  return undefined;
+};
+
 export function useToggleSave() {
   const queryClient = useQueryClient();
+  const { user } = useCurrentUser();
+  // Scope every cache op to the acting identity — `hasSaved` is per-user, so a
+  // toggle must never touch another user's cached feed/saved entries.
+  const feedScope = feedKeys.user(user.id);
+  const savedScope = savedKeys.user(user.id);
+
   return useMutation({
     mutationFn: async ({ postId, nextSaved }: { postId: string; nextSaved: boolean }) =>
       unwrap(nextSaved
         ? await api.api.posts({ postId }).save.post()
         : await api.api.posts({ postId }).save.delete()),
 
+    // Re-entrancy: PostCard disables the toggle while this mutation is pending
+    // for the same postId, so two overlapping toggles on one post can't race
+    // (a slow rollback stomping a newer settled state) — the invariant this
+    // optimistic path relies on lives with its consumer, by design.
     onMutate: async ({ postId, nextSaved }) => {
-      await queryClient.cancelQueries({ queryKey: feedKeys.all });
-      await queryClient.cancelQueries({ queryKey: savedKeys.all });
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: feedScope }),
+        queryClient.cancelQueries({ queryKey: savedScope }),
+      ]);
 
-      const prevFeed = queryClient.getQueriesData<Lists>({ queryKey: feedKeys.all });
-      const prevSaved = queryClient.getQueriesData<Lists>({ queryKey: savedKeys.all });
+      const prevFeed = queryClient.getQueriesData<Lists>({ queryKey: feedScope });
+      const prevSaved = queryClient.getQueriesData<Lists>({ queryKey: savedScope });
+      // Snapshot the source BEFORE patching the feed, so its savesCount is pre-toggle.
+      const source = findInSnapshots(prevFeed, postId);
 
-      queryClient.setQueriesData<Lists>({ queryKey: feedKeys.all }, (old) =>
+      queryClient.setQueriesData<Lists>({ queryKey: feedScope }, (old) =>
         patchItems(old, postId, nextSaved));
-      // Saved list: un-saving removes the row optimistically; a new save is
-      // inserted by the settle-refetch (ordering is server truth).
-      queryClient.setQueriesData<Lists>({ queryKey: savedKeys.all }, (old) =>
-        old && {
-          ...old,
-          pages: old.pages.map((page) => ({
-            ...page,
-            items: nextSaved ? page.items : page.items.filter((item) => item.id !== postId),
-          })),
-        });
+
+      // Saved list stays symmetric with the feed: un-save drops the row, a new
+      // save prepends it (most-recent-first) so both caches update instantly;
+      // the settle-refetch still reconciles exact ordering with server truth.
+      queryClient.setQueriesData<Lists>({ queryKey: savedScope }, (old) => {
+        if (!old || old.pages.length === 0) return old;
+        if (!nextSaved) {
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              items: page.items.filter((item) => item.id !== postId),
+            })),
+          };
+        }
+        const present = old.pages.some((page) => page.items.some((item) => item.id === postId));
+        const [first, ...rest] = old.pages;
+        if (present || !source || !first) return old;
+        const savedItem: PostItem = {
+          ...source,
+          hasSaved: true,
+          savesCount: source.savesCount + 1,
+          savedAt: new Date().toISOString(),
+        };
+        return { ...old, pages: [{ ...first, items: [savedItem, ...first.items] }, ...rest] };
+      });
 
       return { prevFeed, prevSaved };
     },
@@ -103,22 +149,28 @@ export function useToggleSave() {
     },
 
     onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: feedKeys.all });
-      await queryClient.invalidateQueries({ queryKey: savedKeys.all });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: feedScope }),
+        queryClient.invalidateQueries({ queryKey: savedScope }),
+      ]);
     },
   });
 }
 
 export function useRemovePost() {
   const queryClient = useQueryClient();
+  const { user } = useCurrentUser();
   return useMutation({
+    // unwrap() keeps this on the same typed-error contract (ApiClientError) as
+    // every other call, so getApiErrorCode() reads it like any other failure.
     mutationFn: async ({ postId }: { postId: string }) => {
-      const res = await api.api.posts({ postId }).delete();
-      if (res.error) throw res.error;
+      unwrap(await api.api.posts({ postId }).delete());
     },
     onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: feedKeys.all });
-      await queryClient.invalidateQueries({ queryKey: savedKeys.all });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: feedKeys.user(user.id) }),
+        queryClient.invalidateQueries({ queryKey: savedKeys.user(user.id) }),
+      ]);
     },
   });
 }

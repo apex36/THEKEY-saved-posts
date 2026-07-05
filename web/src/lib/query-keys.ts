@@ -14,12 +14,15 @@ export const courseKeys = {
 
 export const feedKeys = {
   all: ['feed'] as const,
-  list: (userId: string, courseId: string) => [...feedKeys.all, userId, courseId] as const,
+  // Every feed query for one identity — the prefix mutations cancel/patch/invalidate.
+  user: (userId: string) => [...feedKeys.all, userId] as const,
+  list: (userId: string, courseId: string) => [...feedKeys.user(userId), courseId] as const,
 };
 
 export const savedKeys = {
   all: ['saved'] as const,
-  list: (userId: string) => [...savedKeys.all, userId, 'list'] as const,
+  user: (userId: string) => [...savedKeys.all, userId] as const,
+  list: (userId: string) => [...savedKeys.user(userId), 'list'] as const,
 };
 
 // Small page size keeps "Load more" demonstrable with the seeded data volume.

@@ -1,6 +1,11 @@
 /**
- * HTTP boundary: auth, validation, exact status codes, JSON I/O — nothing else.
+ * HTTP boundary: auth, query/body validation (Zod), exact status codes, JSON I/O.
  * All behaviour lives in ForumService; all rules live in the domain layer.
+ *
+ * Path-id *shape* is deliberately NOT validated with a Zod `.uuid()` here: a
+ * malformed `:postId` must read as "a post that doesn't exist" → 404, not a
+ * 400 "bad request" (spec's exact status codes). So the id flows to the service,
+ * which resolves both malformed and unknown ids to 404 (see forum-service.ts).
  */
 import { Elysia } from 'elysia';
 import { cors } from '@elysiajs/cors';
