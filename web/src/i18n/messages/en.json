@@ -1,0 +1,39 @@
+{
+  "app": { "title": "Course Forum" },
+  "nav": { "feed": "Feed", "saved": "Saved", "main": "Main navigation" },
+  "header": {
+    "signedInAs": "Viewing as",
+    "role_student": "Student",
+    "role_moderator": "Moderator"
+  },
+  "feed": {
+    "coursesLabel": "Courses",
+    "empty": "No posts in this course yet.",
+    "loadMore": "Load more",
+    "noCourses": "You are not enrolled in any course."
+  },
+  "post": {
+    "saves": "{count, plural, one {# save} other {# saves}}",
+    "save": "Save post",
+    "unsave": "Remove from saved",
+    "remove": "Remove post",
+    "by": "by {name}"
+  },
+  "saved": {
+    "title": "Saved posts",
+    "empty": "Nothing saved yet — tap the bookmark on any post to keep it here.",
+    "goToFeed": "Browse the feed",
+    "savedAt": "Saved {relative}"
+  },
+  "errors": {
+    "UNAUTHENTICATED": "You need to be signed in.",
+    "NOT_ENROLLED": "You are not enrolled in this course.",
+    "NOT_MODERATOR": "Only moderators can do that.",
+    "POST_NOT_FOUND": "That post no longer exists.",
+    "COURSE_NOT_FOUND": "That course no longer exists.",
+    "INVALID_CURSOR": "Something went wrong with paging — please reload.",
+    "generic": "Something went wrong.",
+    "retry": "Try again"
+  },
+  "common": { "loading": "Loading…" }
+}

@@ -1,7 +1,7 @@
 {
   "name": "saved-posts",
   "private": true,
-  "workspaces": ["server"],
+  "workspaces": ["server", "web"],
   "scripts": {
     "db:up": "docker compose up -d --wait",
     "db:migrate": "bun run --filter @app/server db:migrate",
