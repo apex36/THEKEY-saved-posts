@@ -3,8 +3,11 @@
  * the single place that turns them into responses; bodies expose only the
  * machine `code` — the web app maps codes to localized strings.
  */
+/** Literal statuses matter: a plain `number` would collapse Eden's per-status response types into an index signature. */
+export type ApiErrorStatus = 400 | 401 | 403 | 404;
+
 export class ApiError extends Error {
-  constructor(readonly status: number, readonly code: string) {
+  constructor(readonly status: ApiErrorStatus, readonly code: string) {
     super(code);
   }
 }

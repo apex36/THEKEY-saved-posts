@@ -75,20 +75,24 @@ export class ForumService {
   }
 
   async removePost(actor: User, postId: string): Promise<void> {
-    if (!isUuid(postId)) throw new NotFoundError('POST_NOT_FOUND');
-    const post = await this.repos.posts.findVisibleMetaById(postId);
-    if (!post) throw new NotFoundError('POST_NOT_FOUND');
+    await this.findVisiblePostOr404(postId);
     if (actor.role !== 'moderator') throw new ForbiddenError('NOT_MODERATOR');
     await this.repos.posts.softDelete(postId);
   }
 
   // ── private ───────────────────────────────────────────────────────────────
 
-  /** 404 before 403: a missing/removed/malformed-id post "doesn't exist" regardless of enrollment. */
-  private async requireVisiblePost(actor: User, postId: string): Promise<PostMeta> {
+  /** 404 for a missing, removed, or malformed-id post — it "doesn't exist" regardless of caller. */
+  private async findVisiblePostOr404(postId: string): Promise<PostMeta> {
     if (!isUuid(postId)) throw new NotFoundError('POST_NOT_FOUND');
     const post = await this.repos.posts.findVisibleMetaById(postId);
     if (!post) throw new NotFoundError('POST_NOT_FOUND');
+    return post;
+  }
+
+  /** 404 before 403: existence is checked first, then course access. */
+  private async requireVisiblePost(actor: User, postId: string): Promise<PostMeta> {
+    const post = await this.findVisiblePostOr404(postId);
     await this.assertCanAccessCourse(actor, post.courseId);
     return post;
   }
