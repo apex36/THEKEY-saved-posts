@@ -13,3 +13,5 @@ playwright-report/
 # Local-only: assignment PDF + interview prep — never submit these
 /docs/Saved-Posts-Take-Home.pdf
 /docs/interview-prep.html
+# Next.js generated (regenerated on dev/build)
+/web/next-env.d.ts
