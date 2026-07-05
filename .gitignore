@@ -4,3 +4,8 @@ node_modules/
 .env.local
 dist/
 docs/superpowers
+
+# Playwright
+test-results/
+playwright-report/
+/web/e2e-*.png
