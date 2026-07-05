@@ -9,3 +9,7 @@ docs/superpowers
 test-results/
 playwright-report/
 /web/e2e-*.png
+
+# Local-only: assignment PDF + interview prep — never submit these
+/docs/Saved-Posts-Take-Home.pdf
+/docs/interview-prep.html
