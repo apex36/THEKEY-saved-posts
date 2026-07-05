@@ -65,6 +65,12 @@ export const POSTS: SeedPost[] = [
   { id: pid(8), courseId: COURSE_DB, authorId: CHEN.id, title: 'Soft delete is a product decision', body: 'deleted_at columns preserve history and enable undo, but every query must remember the filter — centralize it…', createdAt: '2026-06-08T13:10:00.000Z' },
   { id: pid(9), courseId: COURSE_TS, authorId: ALICE.id, title: 'Testing pure cores', body: 'Push I/O to the edges and the interesting logic becomes plain functions you can test in microseconds…', createdAt: '2026-06-09T10:05:00.000Z' },
   { id: pid(10), courseId: COURSE_DB, authorId: BILAL.id, title: 'Counting with FILTER', body: 'count(*) FILTER (WHERE …) beats a correlated CASE WHEN sum and reads exactly like the business rule…', createdAt: '2026-06-10T12:00:00.000Z' },
+  { id: pid(11), courseId: COURSE_TS, authorId: CHEN.id, title: 'Branded types for ids', body: 'A UserId that cannot be passed where a PostId belongs catches whole categories of bugs at compile time…', createdAt: '2026-06-11T09:30:00.000Z' },
+  { id: pid(12), courseId: COURSE_DB, authorId: CHEN.id, title: 'EXPLAIN before you index', body: 'Guessing at indexes wastes write throughput. Read the plan, find the seq scan, then add exactly one index…', createdAt: '2026-06-12T10:15:00.000Z' },
+  { id: pid(13), courseId: COURSE_TS, authorId: ALICE.id, title: 'Errors as values vs exceptions', body: 'Result types make failure paths explicit, but TypeScript ergonomics still favor exceptions at I/O edges…', createdAt: '2026-06-13T15:45:00.000Z' },
+  { id: pid(14), courseId: COURSE_DB, authorId: BILAL.id, title: 'Timestamptz or bust', body: 'Naive timestamps drift the moment two systems disagree on timezone. Store timestamptz, render locally…', createdAt: '2026-06-14T08:20:00.000Z' },
+  { id: pid(15), courseId: COURSE_TS, authorId: CHEN.id, title: 'The case for readonly everywhere', body: 'Mutation at a distance is the hardest bug class to trace. readonly arrays and object fields make it opt-in…', createdAt: '2026-06-15T11:50:00.000Z' },
+  { id: pid(16), courseId: COURSE_DB, authorId: CHEN.id, title: 'Connection pools are not optional', body: 'Every serverless cold start opening its own connection is how databases fall over. Pool at the edge…', createdAt: '2026-06-16T13:35:00.000Z' },
 ];
 
 /**

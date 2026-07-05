@@ -21,7 +21,8 @@ export const savedKeys = {
   list: () => [...savedKeys.all, 'list'] as const,
 };
 
-const PAGE_SIZE = 10;
+// Small page size keeps "Load more" demonstrable with the seeded data volume.
+const PAGE_SIZE = 5;
 
 export const coursesOptions = () => queryOptions({
   queryKey: courseKeys.all,

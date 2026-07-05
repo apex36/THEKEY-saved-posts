@@ -42,7 +42,7 @@ This is race-free in one round trip and I considered it seriously. I didn't choo
 ## 3. What I'd do next with another day
 
 - **Real session-based auth** (signed cookie or JWT with actual login) instead of the `x-user-id` header stub — the header is fine for a scoped take-home but isn't something I'd want near a real deployment.
-- **Playwright e2e tests** covering the full save/un-save toggle and locale switch through the actual rendered UI, on top of the current unit/service/API/integration layers, to close the gap between "the API does the right thing" and "the button in the browser does the right thing."
+- **Wire the Playwright e2e suite into CI.** The suite exists (`web/e2e/` — it walks feed rendering, the optimistic toggle, saved-list isolation across identities, moderator remove, and Arabic RTL/plurals against the live stack), but it needs a running DB/API/web, so CI would have to compose the stack first; today it's a locally-run layer on top of unit/service/API/integration.
 - **A save-events audit table** alongside the current-state `saved_posts` table, to support "saves over time" analytics without disturbing the existing idempotency/reactivation model.
 - **CI** running `bun run typecheck` and `bun run test` on every push — everything already runs from a clean checkout with no Docker required for tests, so wiring it into GitHub Actions is mechanical, I just didn't have the time slot for it in this box.
 - **Rate limiting** on the save/un-save endpoints, since they're the only mutation surface a malicious or buggy client could hammer.

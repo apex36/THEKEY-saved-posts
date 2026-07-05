@@ -33,6 +33,14 @@ bun run test
 bun run typecheck
 ```
 
+### Optional: browser e2e (Playwright)
+
+Requires the full stack running (DB + API + web, as above) plus a one-time `bunx playwright install chromium`:
+
+```bash
+bun run --filter @app/web test:e2e   # reseeds, then walks every UI requirement live
+```
+
 The web app reads `NEXT_PUBLIC_API_URL` (defaults to `http://localhost:3001`).
 
 ## Demo identities (switch in the header)
