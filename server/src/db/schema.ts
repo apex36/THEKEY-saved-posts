@@ -36,8 +36,12 @@ export const posts = pgTable('posts', {
   authorId: uuid('author_id').notNull().references(() => users.id),
   title: text('title').notNull(),
   body: text('body').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  // precision: 3 (milliseconds) — keyset cursors carry `.toISOString()` (ms)
+  // values, so the stored column, ORDER BY, and the cursor must share ms
+  // precision; a default µs column would let a same-millisecond row match
+  // neither the `lt` nor the `eq` branch of the keyset predicate and vanish.
+  createdAt: timestamp('created_at', { withTimezone: true, precision: 3 }).notNull().defaultNow(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true, precision: 3 }),
 }, (t) => [
   index('posts_feed_idx').on(t.courseId, t.createdAt.desc(), t.id.desc()),
 ]);
@@ -46,8 +50,8 @@ export const savedPosts = pgTable('saved_posts', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').notNull().references(() => users.id),
   postId: uuid('post_id').notNull().references(() => posts.id),
-  savedAt: timestamp('saved_at', { withTimezone: true }).notNull().defaultNow(),
-  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  savedAt: timestamp('saved_at', { withTimezone: true, precision: 3 }).notNull().defaultNow(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true, precision: 3 }),
 }, (t) => [
   // ONE row per (user, post) forever — re-save reactivates it; doubles as the concurrency backstop.
   uniqueIndex('saved_posts_user_post_uq').on(t.userId, t.postId),

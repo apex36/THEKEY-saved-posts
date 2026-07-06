@@ -52,6 +52,13 @@ describe('401 — unauthenticated request to any endpoint (doc rule 1)', () => {
   it('malformed user id through the HTTP layer', async () => {
     expect((await req('/me', 'not-a-uuid')).status).toBe(401);
   });
+
+  it('401 wins over 400: unauthenticated request with an invalid query is 401, not a validation error', async () => {
+    // Auth must be decided BEFORE query-schema validation — an unauthenticated
+    // caller must never learn whether their query was well-formed.
+    expect((await req(`/courses/${COURSE_TS}/posts?limit=999`)).status).toBe(401);
+    expect((await req('/me/saved?limit=abc')).status).toBe(401);
+  });
 });
 
 describe('403 — enrollment/role boundary (doc rule 2)', () => {

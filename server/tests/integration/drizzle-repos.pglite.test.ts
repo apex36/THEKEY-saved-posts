@@ -5,7 +5,8 @@
  */
 import { beforeAll, describe, expect, it } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
-import { drizzle } from 'drizzle-orm/pglite';
+import { sql } from 'drizzle-orm';
+import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import { migrate } from 'drizzle-orm/pglite/migrator';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -20,9 +21,10 @@ import {
 const tsPosts = POSTS.filter((p) => p.courseId === COURSE_TS);
 
 let repos: Repos;
+let db: PgliteDatabase<typeof schema>;
 
 beforeAll(async () => {
-  const db = drizzle(new PGlite(), { schema });
+  db = drizzle(new PGlite(), { schema });
   const migrationsFolder = join(dirname(fileURLToPath(import.meta.url)), '../../drizzle');
   await migrate(db, { migrationsFolder });
   await db.insert(schema.users).values([...SEED_USERS]);
@@ -95,5 +97,33 @@ describe('hydrated flags in one query', () => {
     await repos.posts.softDelete(tsPosts[1]!.id);
     const after = await repos.saved.listSavedPage(ALICE.id, null, 10);
     expect(after.items.find((i) => i.id === tsPosts[1]!.id)).toBeUndefined();
+  });
+
+  it('millisecond-precision cursor: two saves in the same ms both survive limit-1 pagination (F2 regression)', async () => {
+    // A fresh user with exactly two saves whose saved_at differ ONLY below the
+    // millisecond — the precision the app/cursor never carry. With timestamptz(3)
+    // both truncate to the same stored ms, so the keyset falls back to the id
+    // tiebreak instead of a sub-ms boundary the ms cursor cannot represent.
+    // On a µs column, the row between the ms-floor and the cursor's µs would be
+    // matched by neither the `lt` nor the `eq` branch and vanish forever.
+    const DANA = { id: '00000000-0000-4000-8000-0000000da4a0', name: 'Dana', role: 'student' as const };
+    await db.insert(schema.users).values(DANA);
+    const [pa, pb] = [tsPosts[2]!, tsPosts[3]!];
+    await db.insert(schema.savedPosts).values([
+      { userId: DANA.id, postId: pa.id, savedAt: sql`'2026-06-01T00:00:00.123400Z'::timestamptz` },
+      { userId: DANA.id, postId: pb.id, savedAt: sql`'2026-06-01T00:00:00.123800Z'::timestamptz` },
+    ]);
+
+    const collected: string[] = [];
+    let cursor: ReturnType<typeof decodeCursor> = null;
+    for (let i = 0; i < 5; i++) {
+      const page = await repos.saved.listSavedPage(DANA.id, cursor, 1);
+      collected.push(...page.items.map((it) => it.id));
+      if (!page.nextCursor) break;
+      cursor = decodeCursor(page.nextCursor);
+    }
+    expect(collected).toContain(pa.id); // neither row dropped across the cursor boundary
+    expect(collected).toContain(pb.id);
+    expect(new Set(collected).size).toBe(collected.length); // and none duplicated
   });
 });

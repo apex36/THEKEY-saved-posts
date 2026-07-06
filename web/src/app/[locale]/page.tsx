@@ -14,7 +14,11 @@ export default function FeedPage() {
   const { user } = useCurrentUser();
   const courses = useCourses();
   const [selected, setSelected] = useState<string | null>(null);
-  const courseId = selected ?? courses.data?.[0]?.id ?? '';
+  // A course selected as one identity may not exist for the next (switching users
+  // does not remount this page). Fall back to the first available course rather
+  // than fetching a course this user isn't enrolled in and rendering a 403.
+  const courseId =
+    (selected && courses.data?.some((c) => c.id === selected) ? selected : courses.data?.[0]?.id) ?? '';
   const feed = useFeed(courseId);
   const toggle = useToggleSave();
   const remove = useRemovePost();

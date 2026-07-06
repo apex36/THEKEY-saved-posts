@@ -5,7 +5,7 @@
  */
 import { randomUUID } from 'node:crypto';
 import type { Cursor } from '../domain/cursor';
-import { encodeCursor } from '../domain/cursor';
+import { toPage } from './pagination';
 import {
   DuplicateSaveError,
   type Course,
@@ -119,7 +119,7 @@ export class MemoryRepos implements Repos {
         .filter((p) => p.courseId === courseId && p.deletedAt === null)
         .sort(byTsIdDesc((p) => p.createdAt, (p) => p.id))
         .filter(afterCursor(cursor, (p) => p.createdAt, (p) => p.id));
-      return this.toPage(rows, limit, (p) => this.toPostView(p, viewerId), (p) => ({
+      return toPage(rows, limit, (p) => this.toPostView(p, viewerId), (p) => ({
         ts: p.createdAt.toISOString(),
         id: p.id,
       }));
@@ -160,12 +160,8 @@ export class MemoryRepos implements Repos {
       if (save) save.deletedAt = new Date();
     },
 
-    getPostSaveState: async (userId, postId): Promise<SaveState> => ({
-      hasSaved: this.savesData.some(
-        (s) => s.userId === userId && s.postId === postId && s.deletedAt === null,
-      ),
-      savesCount: this.savesData.filter((s) => s.postId === postId && s.deletedAt === null).length,
-    }),
+    getPostSaveState: async (userId, postId): Promise<SaveState> =>
+      this.saveStateFor(postId, userId),
 
     listSavedPage: async (userId, cursor, limit) => {
       const visiblePostIds = new Set(
@@ -175,7 +171,7 @@ export class MemoryRepos implements Repos {
         .filter((s) => s.userId === userId && s.deletedAt === null && visiblePostIds.has(s.postId))
         .sort(byTsIdDesc((s) => s.savedAt, (s) => s.id))
         .filter(afterCursor(cursor, (s) => s.savedAt, (s) => s.id));
-      return this.toPage(
+      return toPage(
         rows,
         limit,
         (s): SavedPostView => ({
@@ -196,26 +192,23 @@ export class MemoryRepos implements Repos {
       body: post.body,
       authorName: this.usersData.find((u) => u.id === post.authorId)?.name ?? 'Unknown',
       createdAt: post.createdAt.toISOString(),
-      hasSaved: this.savesData.some(
-        (s) => s.userId === viewerId && s.postId === post.id && s.deletedAt === null,
-      ),
-      savesCount: this.savesData.filter((s) => s.postId === post.id && s.deletedAt === null).length,
+      ...this.saveStateFor(post.id, viewerId),
     };
   }
 
-  private toPage<Row, View>(
-    rows: Row[],
-    limit: number,
-    toView: (row: Row) => View,
-    toCursor: (row: Row) => Cursor,
-  ): Page<View> {
-    const pageRows = rows.slice(0, limit);
-    const last = pageRows[pageRows.length - 1];
-    return {
-      items: pageRows.map(toView),
-      nextCursor: rows.length > limit && last !== undefined ? encodeCursor(toCursor(last)) : null,
-    };
+  /** hasSaved + savesCount for one post in a single pass over the saves. */
+  private saveStateFor(postId: string, viewerId: string): SaveState {
+    let savesCount = 0;
+    let hasSaved = false;
+    for (const s of this.savesData) {
+      if (s.postId === postId && s.deletedAt === null) {
+        savesCount += 1;
+        if (s.userId === viewerId) hasSaved = true;
+      }
+    }
+    return { hasSaved, savesCount };
   }
+
 }
 
 const byTsIdDesc = <Row>(ts: (r: Row) => Date, id: (r: Row) => string) =>

@@ -10,7 +10,8 @@ import { and, desc, eq, isNull, lt, or, sql, type SQL } from 'drizzle-orm';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import * as schema from '../db/schema';
 import { courses, enrollments, posts, savedPosts, users } from '../db/schema';
-import { encodeCursor, type Cursor } from '../domain/cursor';
+import { type Cursor } from '../domain/cursor';
+import { toPage } from './pagination';
 import {
   DuplicateSaveError,
   type Page,
@@ -55,20 +56,6 @@ const isUniqueViolation = (error: unknown): boolean => {
 };
 
 export function createDrizzleRepos(db: AppDb): Repos {
-  const toPage = <Row, View>(
-    rows: Row[],
-    limit: number,
-    toView: (row: Row) => View,
-    toCursor: (row: Row) => Cursor,
-  ): Page<View> => {
-    const pageRows = rows.slice(0, limit);
-    const last = pageRows[pageRows.length - 1];
-    return {
-      items: pageRows.map(toView),
-      nextCursor: rows.length > limit && last !== undefined ? encodeCursor(toCursor(last)) : null,
-    };
-  };
-
   return {
     users: {
       findById: async (id) => {

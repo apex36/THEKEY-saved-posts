@@ -23,7 +23,12 @@ export function createApp(service: ForumService) {
       return status(500, { code: 'INTERNAL' });
     })
     // Auth: identity from the x-user-id header, role from the user record — never from a header.
-    .resolve(async ({ headers }) => ({ actor: await service.requireUser(headers['x-user-id']) }))
+    // `.derive` (transform phase) runs BEFORE query/body validation, so an
+    // unauthenticated request is rejected with 401 even when its query is also
+    // invalid — 401 must win over a 400 (a caller shouldn't learn their query
+    // was malformed before proving who they are). `.resolve` would run after
+    // validation and leak a 400 first.
+    .derive(async ({ headers }) => ({ actor: await service.requireUser(headers['x-user-id']) }))
     .get('/me', ({ actor }) => actor)
     .get('/users', () => service.listUsers()) // demo-only: powers the reviewer's user switcher
     .get('/courses', ({ actor }) => service.listCourses(actor))

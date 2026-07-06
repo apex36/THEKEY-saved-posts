@@ -132,6 +132,23 @@ test('roles: moderator reads every course and removes a post everywhere', async 
   await expect(page.locator('article h3').first()).toHaveText('Errors as values vs exceptions');
 });
 
+test('user switch does not strand a stale course tab on a forbidden course', async ({ page }) => {
+  await page.goto('/en');
+  await switchTo(page, CHEN.id);
+
+  // Chen selects a course Alice is NOT enrolled in.
+  await page.getByRole('tab', { name: 'Databases 201' }).click();
+  await expect(page.getByRole('tab', { name: 'Databases 201' })).toHaveAttribute('aria-selected', 'true');
+
+  // Switch to Alice (TypeScript 101 only): the stale selection must fall back to
+  // an enrolled course, NOT fetch Databases 201 and render a 403 error state.
+  await switchTo(page, ALICE.id);
+  await expect(page.getByRole('tab', { name: 'Databases 201' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Try again' })).toHaveCount(0); // no ErrorState
+  await expect(page.getByRole('tab', { name: 'TypeScript 101' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('article').first()).toBeVisible(); // feed actually renders
+});
+
 test('req 8: Arabic locale renders RTL with catalog strings and correct plural categories', async ({ page }) => {
   await page.goto('/ar');
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');

@@ -15,16 +15,16 @@ CREATE TABLE "posts" (
 	"author_id" uuid NOT NULL,
 	"title" text NOT NULL,
 	"body" text NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"deleted_at" timestamp with time zone
+	"created_at" timestamp (3) with time zone DEFAULT now() NOT NULL,
+	"deleted_at" timestamp (3) with time zone
 );
 --> statement-breakpoint
 CREATE TABLE "saved_posts" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" uuid NOT NULL,
 	"post_id" uuid NOT NULL,
-	"saved_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"deleted_at" timestamp with time zone
+	"saved_at" timestamp (3) with time zone DEFAULT now() NOT NULL,
+	"deleted_at" timestamp (3) with time zone
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
