@@ -7,6 +7,10 @@ export default getRequestConfig(async ({ requestLocale }) => {
   const locale = hasLocale(routing.locales, requested) ? requested : routing.defaultLocale;
   return {
     locale,
+    // Pin the formatting zone so post dates render identically for every viewer
+    // (and every CI machine) instead of falling back to the server's own zone —
+    // seed timestamps are UTC, so UTC keeps "Jun 15" stable regardless of host.
+    timeZone: 'UTC',
     messages: (await import(`./messages/${locale}.json`)).default,
   };
 });

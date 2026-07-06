@@ -18,4 +18,17 @@ describe('cursor codec', () => {
   it('rejects a non-ISO timestamp', () => {
     expect(decodeCursor(Buffer.from(JSON.stringify({ ts: 'yesterday', id: 'x' })).toString('base64url'))).toBeNull();
   });
+
+  it('rejects a rolled/tampered but Date.parse-able timestamp (e.g. Feb 30)', () => {
+    // Date.parse('2026-02-30T00:00:00.000Z') is NOT NaN — it rolls to Mar 2.
+    // A canonical-ISO round-trip check must reject it rather than page from the shift.
+    const tampered = Buffer.from(JSON.stringify({ ts: '2026-02-30T00:00:00.000Z', id: 'x' })).toString('base64url');
+    expect(decodeCursor(tampered)).toBeNull();
+  });
+
+  it('rejects a non-canonical ISO spelling (no millis / offset form)', () => {
+    for (const ts of ['2026-07-05T10:00:00Z', '2026-07-05T10:00:00.000+00:00']) {
+      expect(decodeCursor(Buffer.from(JSON.stringify({ ts, id: 'x' })).toString('base64url'))).toBeNull();
+    }
+  });
 });

@@ -1,4 +1,9 @@
 import { expect, test } from '@playwright/test';
+import { reseed } from './reseed';
+
+// Hermetic: asserts on pristine seed data (e.g. the Jun 15 post, empty saved
+// list), so reseed first rather than depend on running before the mutating specs.
+test.beforeAll(() => reseed());
 
 test('course ledger visual system frames the feed as a study workspace', async ({ page }) => {
   await page.goto('/en');

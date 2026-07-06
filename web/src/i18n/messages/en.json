@@ -40,6 +40,7 @@
     "COURSE_NOT_FOUND": "That course no longer exists.",
     "INVALID_CURSOR": "Something went wrong with paging — please reload.",
     "generic": "Something went wrong.",
+    "removeFailed": "Couldn't remove the post.",
     "retry": "Try again"
   },
   "common": { "loading": "Loading…" }

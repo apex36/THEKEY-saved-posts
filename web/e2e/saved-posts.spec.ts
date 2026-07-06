@@ -5,6 +5,11 @@
  */
 import { expect, test, type Page } from '@playwright/test';
 import { DEMO_USERS } from '../src/lib/demo-users';
+import { reseed } from './reseed';
+
+// Hermetic: this file's scenarios mutate data (remove a post, add saves), so
+// start from the seed fixture regardless of which files ran before it.
+test.beforeAll(() => reseed());
 
 const [ALICE, BILAL, CHEN, MONA] = DEMO_USERS as [
   (typeof DEMO_USERS)[number], (typeof DEMO_USERS)[number],

@@ -83,6 +83,22 @@ export default function FeedPage() {
         )}
         {feed.isSuccess && items.length === 0 && <EmptyState message={t('feed.empty')} />}
 
+        {remove.isError && (
+          <div
+            role="alert"
+            className="mb-3 flex items-center justify-between gap-3 rounded-[6px] border border-[#9E3D2E]/35 bg-[#FFF7F2] px-4 py-2.5 text-sm text-[#9E3D2E]"
+          >
+            <span>{t('errors.removeFailed')}</span>
+            <button
+              type="button"
+              onClick={() => { if (remove.variables) remove.mutate(remove.variables); }}
+              className="rounded-[4px] border border-[#9E3D2E]/35 px-2.5 py-1 text-xs font-medium transition hover:bg-[#9E3D2E]/10"
+            >
+              {t('errors.retry')}
+            </button>
+          </div>
+        )}
+
         <div className="space-y-3">
           {items.map((post) => (
             <PostCard

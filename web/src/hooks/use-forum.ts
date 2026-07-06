@@ -96,10 +96,13 @@ export function useToggleSave() {
         ? await api.api.posts({ postId }).save.post()
         : await api.api.posts({ postId }).save.delete()),
 
-    // Re-entrancy: PostCard disables the toggle while this mutation is pending
-    // for the same postId, so two overlapping toggles on one post can't race
-    // (a slow rollback stomping a newer settled state) — the invariant this
-    // optimistic path relies on lives with its consumer, by design.
+    // Re-entrancy: PostCard disables the toggle while a mutation is pending for
+    // the SAME postId, so the common same-post double-click can't race. Toggles
+    // on DIFFERENT posts are not blocked — a failing mutation's onError restores
+    // its own pre-toggle snapshot and can transiently stomp another post's
+    // in-flight optimistic patch — but onSettled invalidates both keys and
+    // refetches, so every list reconverges to server truth. The window is
+    // self-healing by design, not guaranteed race-free.
     onMutate: async ({ postId, nextSaved }) => {
       await Promise.all([
         queryClient.cancelQueries({ queryKey: feedScope }),
